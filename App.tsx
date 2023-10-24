@@ -3,11 +3,10 @@ import { SafeAreaView, Button, Text } from 'react-native';
 import BLEAdvertiser from 'react-native-ble-advertiser';
 import { GoogleSignin, GoogleSigninButton, User, statusCodes } from '@react-native-google-signin/google-signin';
 import { PermissionsAndroid } from 'react-native';
-import WebSocket from 'react-native-websocket';
+const WebSocket = global.WebSocket;
 import DeviceInfo from 'react-native-device-info';
 import VIForegroundService from '@voximplant/react-native-foreground-service';
 import { Linking } from 'react-native';
-import useWebSocket from 'react-native-use-websocket';
 
 async function startForegroundService() {
   const notificationConfig = {
@@ -73,30 +72,46 @@ const App: React.FC = () => {
   const [isAdvertising, setIsAdvertising] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<null | User>(null);
   const [isSigninInProgress, setIsSigninInProgress] = useState(false); 
-
+  const [messages, setMessages] = useState([]);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [error, setError] = useState('');
+  console.log(5);
+  
   useEffect(() => {
-    const ws = new WebSocket('ws://10.13.252.253:3333/ws');
-    ws.onopen = () => {
+    setError("3");
+    const wsInstance = new WebSocket('ws://10.13.252.253:3333/ws');
+    wsInstance.onopen = () => {
       // Connection opened
       console.log('WebSocket connection opened');
-      ws.send('Hello, server!'); // Send a message to the server
+      wsInstance.send('Hello, server!'); // Send a message to the server
     };
-    ws.onmessage = (e:any) => {
+    wsInstance.onmessage = (e:any) => {
       // Receive a message from the server
       console.log(e.data);
     };
-    ws.onerror = (e:any) => {
-      // An error occurred
-      console.log(e.message);
+    wsInstance.onerror = (e:any) => {
+      console.log("error");
+      setError("error");
+      console.log(e);
     };
-    ws.onclose = (e:any) => {
+    wsInstance.onclose = (e:any) => {
       // Connection closed
       console.log(e.code, e.reason);
     };
+
+    setWs(wsInstance);
+
+
   }, []);
 
+  const sendMessage = (userData: any) => {
+    if(ws){
+      let user = userData.user;
+      ws.send(JSON.stringify(user));
+    }
+  }
+
   const signIn = async () => {
-    
     GoogleSignin.configure({webClientId:"1019647243767-o1clrpj0qch69isj5lbg170k34enp7kv.apps.googleusercontent.com",});
     try {
       setIsSigninInProgress(true);
@@ -104,6 +119,7 @@ const App: React.FC = () => {
       const userData = await GoogleSignin.signIn();
       setIsSigninInProgress(false);
       setUserInfo(userData);
+      sendMessage(userData);
 
       
       const jsonData = JSON.stringify(userData);
@@ -156,9 +172,10 @@ const App: React.FC = () => {
         />
       ) : (
         <>
-          <Text>{userInfo ? `Welcome, ${userInfo.user.name}` : 'Not Signed In'}</Text>
+          <Text>{userInfo ? `Servus, ${userInfo.user.name}` : 'Not Signed In'}</Text>
           <Button title={isAdvertising ? 'Stop Advertising' : 'Start Advertising'} onPress={toggleAdvertising} />
           <Button title="Logout" onPress={logOut} />
+          <Text style={{ color: 'red' }}>{error}</Text>
         </>
       )}
       <Text>{isAdvertising ? 'Advertising...' : 'Not Advertising'}</Text>

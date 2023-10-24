@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-google-signin/google-signin": "^10.0.1",
+    "@types/react-native": "^0.72.5",
     "@voximplant/react-native-foreground-service": "^3.0.2",
     "cors": "^2.8.5",
     "react": "18.2.0",
@@ -29,7 +30,7 @@
     "@react-native/eslint-config": "^0.72.2",
     "@react-native/metro-config": "^0.72.11",
     "@tsconfig/react-native": "^3.0.0",
-    "@types/react": "^18.0.24",
+    "@types/react": "^18.2.31",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.2.1",
     "eslint": "^8.19.0",
