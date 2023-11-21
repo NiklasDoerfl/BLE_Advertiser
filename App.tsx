@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, Button, Text } from 'react-native';
+import { SafeAreaView, Button, Text, View } from 'react-native';
 import BLEAdvertiser from 'react-native-ble-advertiser';
-import { GoogleSignin, GoogleSigninButton, User, statusCodes } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, GoogleSigninButton, User} from '@react-native-google-signin/google-signin';
 import { PermissionsAndroid } from 'react-native';
 const WebSocket = global.WebSocket;
 import DeviceInfo from 'react-native-device-info';
 import VIForegroundService from '@voximplant/react-native-foreground-service';
 import { Linking } from 'react-native';
+import Modal from 'react-native-modal';
+import * as Styles from './StyleS';
+import {CustomTaskbar} from './Taskbar';
+var u = '';
+
+
 
 async function startForegroundService() {
   const notificationConfig = {
@@ -24,6 +30,11 @@ async function startForegroundService() {
       console.error(e);
   }
 }
+
+function startsWithUUIDPrefix(inputString: string): boolean {
+  return inputString.startsWith("uuid:");
+}
+
 
 async function stopForgroundService(){
   await VIForegroundService.getInstance().stopService();
@@ -72,26 +83,33 @@ const App: React.FC = () => {
   const [isAdvertising, setIsAdvertising] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<null | User>(null);
   const [isSigninInProgress, setIsSigninInProgress] = useState(false); 
-  const [messages, setMessages] = useState([]);
+  const [getUUID, setUUID] = useState('');
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const [error, setError] = useState('');
+  const [getError, setError] = useState('');
+  const [isModalVisible, setModalVisible] = useState(false);
   console.log(5);
   
   useEffect(() => {
-    setError("3");
-    const wsInstance = new WebSocket('ws://10.13.252.253:3333/ws');
+    const wsInstance = new WebSocket('ws://ec2-35-171-255-162.compute-1.amazonaws.com/ws');
     wsInstance.onopen = () => {
       // Connection opened
       console.log('WebSocket connection opened');
       wsInstance.send('Hello, server!'); // Send a message to the server
     };
     wsInstance.onmessage = (e:any) => {
-      // Receive a message from the server
-      console.log(e.data);
+      if(startsWithUUIDPrefix(e.data)){
+        setUUID(e.data);
+        u = e.data;
+        //setError(u);
+        toggleModal();
+        setTimeout(function(){toggleAdvertising();},2000);
+      }
+   
+      //WriteFile(e.data);
     };
     wsInstance.onerror = (e:any) => {
       console.log("error");
-      setError("error");
+      setError(e.data);
       console.log(e);
     };
     wsInstance.onclose = (e:any) => {
@@ -104,10 +122,11 @@ const App: React.FC = () => {
 
   }, []);
 
+
   const sendMessage = (userData: any) => {
     if(ws){
       let user = userData.user;
-      ws.send(JSON.stringify(user));
+      ws.send("$$LOGIN$"+JSON.stringify(user));
     }
   }
 
@@ -120,19 +139,30 @@ const App: React.FC = () => {
       setIsSigninInProgress(false);
       setUserInfo(userData);
       sendMessage(userData);
-
-      
-      const jsonData = JSON.stringify(userData);
      
       
+     
     } catch (err) {
       console.log('Error:', err);
       setIsSigninInProgress(false);
       // Handle errors
     }
+
+
   };
 
+  const getPermissions = () =>{
+    Linking.openSettings()
+    .catch(err => console.error('Error opening optimization settings: ', err));
+  };
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+  
+
   const toggleAdvertising = () => {
+    setError(getUUID);
     if (isAdvertising) {
       BLEAdvertiser.stopBroadcast().then(() => {
         setIsAdvertising(false);
@@ -142,8 +172,8 @@ const App: React.FC = () => {
       //openBatteryOptimizationSettings();
       startForegroundService();
       requestLocationPermission();
-      const UUID = '550e8400-e29b-41d4-a716-446655440000'; 
-      
+      const UUID = u.substring(5); 
+      console.log(UUID);
       BLEAdvertiser.setCompanyId(0x04);
       BLEAdvertiser.broadcast(UUID, [], {}).then(() => {
         setIsAdvertising(true);
@@ -156,13 +186,30 @@ const App: React.FC = () => {
       await GoogleSignin.revokeAccess();
       await GoogleSignin.signOut();
       setUserInfo(null);
+      setUUID('');
+      toggleAdvertising();
     } catch (err) {
       // Handle errors
     }
   };
+  
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <SafeAreaView style={Styles.safeAreaViewStyles}>
+      <CustomTaskbar
+      onSettings={() => {
+        getPermissions();
+      }}
+      onLogout={() => {
+        // Handle logout click
+      }}
+      onStart={() => {
+        // Handle start click
+      }}
+      onBreak={() => {
+        // Handle break click
+      }}
+     />
       {!userInfo ? (
         <GoogleSigninButton
           size={GoogleSigninButton.Size.Wide}
@@ -173,9 +220,14 @@ const App: React.FC = () => {
       ) : (
         <>
           <Text>{userInfo ? `Servus, ${userInfo.user.name}` : 'Not Signed In'}</Text>
-          <Button title={isAdvertising ? 'Stop Advertising' : 'Start Advertising'} onPress={toggleAdvertising} />
-          <Button title="Logout" onPress={logOut} />
-          <Text style={{ color: 'red' }}>{error}</Text>
+          <Text style={Styles.buttonStyles} onPress={logOut}>Logout</Text>
+          <Text style={Styles.buttonStyles} onPress={getPermissions}>Allow Permissions</Text>
+          <Modal isVisible={isModalVisible}>
+            <View style={Styles.safeAreaViewStyles}>
+              <Text style={Styles.textStyles}>If you haven't already, allow all permissions by pressing the "Allow Permissions" Button</Text>
+              <Button title="Schließen" onPress={toggleModal} />
+            </View>
+          </Modal>
         </>
       )}
       <Text>{isAdvertising ? 'Advertising...' : 'Not Advertising'}</Text>

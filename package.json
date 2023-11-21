@@ -10,10 +10,14 @@
     "test": "jest"
   },
   "dependencies": {
+    "3": "^2.1.0",
+    "@expo/vector-icons": "^13.0.0",
     "@react-native-google-signin/google-signin": "^10.0.1",
+    "@react-navigation/native": "^6.1.9",
     "@types/react-native": "^0.72.5",
     "@voximplant/react-native-foreground-service": "^3.0.2",
     "cors": "^2.8.5",
+    "fs": "^0.0.1-security",
     "react": "18.2.0",
     "react-native": "0.72.5",
     "react-native-advertise-ble": "^1.1.9",
@@ -21,6 +25,7 @@
     "react-native-ble-manager": "^10.1.4",
     "react-native-bluetooth-serial-next": "^1.2.3",
     "react-native-device-info": "^10.11.0",
+    "react-native-modal": "^13.0.1",
     "react-native-use-websocket": "^0.2.6"
   },
   "devDependencies": {
