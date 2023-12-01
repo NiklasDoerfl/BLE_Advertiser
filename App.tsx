@@ -7,10 +7,25 @@ const WebSocket = global.WebSocket;
 import DeviceInfo from 'react-native-device-info';
 import VIForegroundService from '@voximplant/react-native-foreground-service';
 import { Linking } from 'react-native';
-import Modal from 'react-native-modal';
-import * as Styles from './StyleS';
-import {CustomTaskbar} from './Taskbar';
+//import Modal from 'react-native-modal';
+//import {styles} from './StyleS';
+import { StyleSheet } from 'react-native';
+//import {CustomTaskbar} from './Taskbar';
 var u = '';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  button: {
+    padding: 10,
+    backgroundColor: 'blue',
+    color: 'white',
+    marginTop: 10,
+  },
+});
 
 
 
@@ -100,9 +115,6 @@ const App: React.FC = () => {
       if(startsWithUUIDPrefix(e.data)){
         setUUID(e.data);
         u = e.data;
-        //setError(u);
-        toggleModal();
-        setTimeout(function(){toggleAdvertising();},2000);
       }
    
       //WriteFile(e.data);
@@ -192,24 +204,24 @@ const App: React.FC = () => {
       // Handle errors
     }
   };
-  
 
   return (
-    <SafeAreaView style={Styles.safeAreaViewStyles}>
-      <CustomTaskbar
-      onSettings={() => {
-        getPermissions();
-      }}
-      onLogout={() => {
-        // Handle logout click
-      }}
-      onStart={() => {
-        // Handle start click
-      }}
-      onBreak={() => {
-        // Handle break click
-      }}
-     />
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <GoogleSigninButton 
+        size={GoogleSigninButton.Size.Wide}
+        color={GoogleSigninButton.Color.Dark}
+        onPress={signIn}
+        disabled={isSigninInProgress} />;
+        <Text>{userInfo ? `Welcome, ${userInfo.user.name}` : 'Not Signed In'}</Text>
+      <Button title={isAdvertising ? 'Stop Advertising' : 'Start Advertising'} onPress={toggleAdvertising} />
+      <Text>{isAdvertising ? 'Advertising...' : 'Not Advertising'}</Text>
+    </SafeAreaView>
+  );
+  
+
+  /*return (
+    <View style={styles.container} >
+      
       {!userInfo ? (
         <GoogleSigninButton
           size={GoogleSigninButton.Size.Wide}
@@ -220,19 +232,15 @@ const App: React.FC = () => {
       ) : (
         <>
           <Text>{userInfo ? `Servus, ${userInfo.user.name}` : 'Not Signed In'}</Text>
-          <Text style={Styles.buttonStyles} onPress={logOut}>Logout</Text>
-          <Text style={Styles.buttonStyles} onPress={getPermissions}>Allow Permissions</Text>
-          <Modal isVisible={isModalVisible}>
-            <View style={Styles.safeAreaViewStyles}>
-              <Text style={Styles.textStyles}>If you haven't already, allow all permissions by pressing the "Allow Permissions" Button</Text>
-              <Button title="Schließen" onPress={toggleModal} />
-            </View>
-          </Modal>
+          <Text style={styles.button} onPress={toggleAdvertising}>start</Text>
+          <Text style={styles.button} onPress={logOut}>Logout</Text>
+          <Text style={styles.button} onPress={getPermissions}>Allow Permissions</Text>
+          
         </>
       )}
       <Text>{isAdvertising ? 'Advertising...' : 'Not Advertising'}</Text>
-    </SafeAreaView>
-  );
+    </View>
+  );*/
 };
 
 export default App;

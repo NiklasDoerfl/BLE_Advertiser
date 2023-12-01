@@ -1,4 +1,4 @@
-import { TouchableOpacity, StyleSheet} from 'react-native';
+/*import { TouchableOpacity, StyleSheet} from 'react-native';
 
 import React from 'react';
 import { View } from 'react-native';
@@ -43,4 +43,4 @@ interface CustomTaskbarProps {
   });
   
   export {CustomTaskbar};
-  
+  */
